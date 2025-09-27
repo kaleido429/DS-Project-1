@@ -11,8 +11,13 @@ private:
 	PlayListNode* next;
 
 public:
-	PlayListNode(){}
-	~PlayListNode(){}
+/*
+원래 스켈레톤 코드
+PlayList() {}
+~PlayList(){}
+*/
+	PlayListNode();
+	~PlayListNode();
 	
 	void set() {
 
