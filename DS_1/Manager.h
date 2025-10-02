@@ -24,10 +24,10 @@ public:
 	void LOAD();
 	void ADD(const std::string& Line);
 	void QPOP();
-	void SEARCH();
-	void MAKEPL();
-	void PRINT();
-	void DELETE();
+	void SEARCH(const std::string& params);
+	void MAKEPL(const std::string& params);
+	void PRINT(const std::string& params);
+	void DELETE(const std::string& params);
 	void EXIT();
 
 };
