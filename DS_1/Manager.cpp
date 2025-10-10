@@ -81,7 +81,6 @@ void Manager::run(const char* command) {
 
 void Manager::LOAD() {
 	//Music_List.txt를 읽어서 MusicQueue에 push
-    flog << "========LOAD========" << std::endl;
 
     if (!q.empty()) {
         flog << "========ERROR========" << std::endl;
@@ -96,8 +95,9 @@ void Manager::LOAD() {
         flog << 100 << std::endl;
         flog << "====================" << std::endl;
         return;
-    }
+    }   
 
+    flog << "========LOAD========" << std::endl;
     std::string line;
     while (std::getline(musicList, line)) {
         std::stringstream ss(line);
@@ -121,7 +121,6 @@ void Manager::LOAD() {
 
 void Manager::ADD(const std::string& params) {
 	//MusicQueue에 data 추가 <가수이름> | <노래제목> | <재생시간>
-    flog << "========ADD========" << std::endl;
     
     std::stringstream ss(params);
     std::string artist, title, runtime;
@@ -145,19 +144,21 @@ void Manager::ADD(const std::string& params) {
         return;
     }
 
+    flog << "========ADD========" << std::endl;
     q.push(artist, title, runtime);
     flog << artist << "/" << title << "/" << runtime << std::endl;
     flog << "====================" << std::endl;
 }
 
 void Manager::QPOP() {
-    flog << "========QPOP========" << std::endl;
+    
     if (q.empty()) {
         flog << "========ERROR========" << std::endl;
         flog << 300 << std::endl;
         flog << "====================" << std::endl;
         return;
     }
+    flog << "========QPOP========" << std::endl;
     // 모든 큐 요소를 POP하여 BST 구성
     while (!q.empty()) {
         MusicQueueNode* node = q.pop();
@@ -177,12 +178,12 @@ void Manager::QPOP() {
         tb.insert(node->getTitle(), node->getArtist(), sec);
         delete node; // 큐에서 pop된 노드 해제
     }
+    
     flog << "Success" << std::endl;
     flog << "====================" << std::endl;
 }
 
 void Manager::SEARCH(const std::string& params) {
-    flog << "========SEARCH========" << std::endl;
     std::stringstream ss(params);
     std::string opt; ss >> opt;
     if (opt == "ARTIST") {
@@ -190,6 +191,7 @@ void Manager::SEARCH(const std::string& params) {
         artist = trim_copy(artist);
         auto* node = ab.search(artist);
         if (!node) { flog << "========ERROR========\n400\n====================" << std::endl; return; }
+        flog << "========SEARCH========" << std::endl;
         const auto& titles = node->get_title();
         const auto& times = node->get_rt();
         for (size_t i=0;i<titles.size();++i){ int s=times[i]; flog << artist << "/" << titles[i] << "/" << s/60 << ":" << std::setw(2) << std::setfill('0') << s%60 << "\n"; }
@@ -199,6 +201,7 @@ void Manager::SEARCH(const std::string& params) {
         title = trim_copy(title);
         auto* node = tb.search(title);
         if (!node) { flog << "========ERROR========\n400\n====================" << std::endl; return; }
+        flog << "========SEARCH========" << std::endl;
         const auto& artists = node->getArtists();
         const auto& times = node->getRuntimes();
         for (size_t i=0;i<artists.size();++i){ int s=times[i]; flog << artists[i] << "/" << title << "/" << s/60 << ":" << std::setw(2) << std::setfill('0') << s%60 << "\n"; }
@@ -214,14 +217,13 @@ void Manager::SEARCH(const std::string& params) {
         if (!node) { flog << "========ERROR========\n400\n====================" << std::endl; return; }
         const auto& titles = node->get_title();
         const auto& times = node->get_rt();
-        for (size_t i=0;i<titles.size();++i){ if (titles[i]==title){ int s=times[i]; flog<<artist<<"/"<<title<<"/"<<s/60<<":"<<std::setw(2)<<std::setfill('0')<<s%60<<"\n"; flog << "====================" << std::endl; return; } }
+        for (size_t i=0;i<titles.size();++i){ if (titles[i]==title){ flog << "========SEARCH========" << std::endl; int s=times[i]; flog<<artist<<"/"<<title<<"/"<<s/60<<":"<<std::setw(2)<<std::setfill('0')<<s%60<<"\n"; flog << "====================" << std::endl; return; } }
         flog << "========ERROR========\n400\n====================" << std::endl; return;
     }
     flog << "========ERROR========\n400\n====================" << std::endl;
 }
 
 void Manager::MAKEPL(const std::string& params) {
-    flog << "========MAKEPL========" << std::endl;
     std::stringstream ss(params); std::string opt; ss>>opt;
     auto print_tail = [&](){ flog << "Count : "<< pl.get_count() << " / 10\n"; int t=pl.run_time(); flog<<"Time : "<<t/60<<"min "<<t%60<<"sec\n"; flog << "====================" << std::endl; };
     if (opt=="ARTIST"){
@@ -230,6 +232,7 @@ void Manager::MAKEPL(const std::string& params) {
         const auto& titles=node->get_title(); const auto& times=node->get_rt();
         if (pl.get_count() + (int)titles.size() > 10){ flog<<"========ERROR========\n500\n===================="<<std::endl; return; }
         for(size_t i=0;i<titles.size();++i){ if(!pl.find_song(artist, titles[i])){ pl.insert_node(artist, titles[i], times[i]); } else { flog<<"========ERROR========\n500\n===================="<<std::endl; return; } }
+        flog << "========MAKEPL========" << std::endl;
         flog << pl.print();
         print_tail(); return;
     } else if (opt=="TITLE"){
@@ -238,6 +241,7 @@ void Manager::MAKEPL(const std::string& params) {
         const auto& artists=node->getArtists(); const auto& times=node->getRuntimes();
         if (pl.get_count() + (int)artists.size() > 10){ flog<<"========ERROR========\n500\n===================="<<std::endl; return; }
         for(size_t i=0;i<artists.size();++i){ if(!pl.find_song(artists[i], title)){ pl.insert_node(artists[i], title, times[i]); } else { flog<<"========ERROR========\n500\n===================="<<std::endl; return; } }
+        flog << "========MAKEPL========" << std::endl;
         flog << pl.print();
         print_tail(); return;
     } else if (opt=="SONG"){
@@ -246,14 +250,13 @@ void Manager::MAKEPL(const std::string& params) {
         std::string artist=trim_copy(rest.substr(0,bar)), title=trim_copy(rest.substr(bar+1));
         auto* aNode = ab.search(artist); if(!aNode){ flog<<"========ERROR========\n500\n===================="<<std::endl; return; }
         const auto& titles=aNode->get_title(); const auto& times=aNode->get_rt();
-        for(size_t i=0;i<titles.size();++i){ if(titles[i]==title){ if(pl.get_count()>=10 || pl.find_song(artist,title)){ flog<<"========ERROR========\n500\n===================="<<std::endl; return;} pl.insert_node(artist,title,times[i]); flog << pl.print(); print_tail(); return; } }
+        for(size_t i=0;i<titles.size();++i){ if(titles[i]==title){ if(pl.get_count()>=10 || pl.find_song(artist,title)){ flog<<"========ERROR========\n500\n===================="<<std::endl; return;} pl.insert_node(artist,title,times[i]); flog << "========MAKEPL========" << std::endl; flog << pl.print(); print_tail(); return; } }
         flog<<"========ERROR========\n500\n===================="<<std::endl; return;
     }
     flog<<"========ERROR========\n500\n===================="<<std::endl;
 }
 
 void Manager::PRINT(const std::string& params) {
-    flog << "========PRINT========" << std::endl;
     std::string p = trim_copy(params);
     if (p == "ARTIST") {
         if (ab.empty()) {
@@ -262,6 +265,7 @@ void Manager::PRINT(const std::string& params) {
             flog << "====================" << std::endl;
             return;
         }
+        flog << "========PRINT========" << std::endl;
         flog << "ArtistBST" << std::endl;
         ab.print(flog);
     } else if (p == "TITLE") {
@@ -271,10 +275,12 @@ void Manager::PRINT(const std::string& params) {
             flog << "====================" << std::endl;
             return;
         }
+        flog << "========PRINT========" << std::endl;
         flog << "TitleBST" << std::endl;
         tb.print(flog);
     } else if (p == "LIST") {
         if (!pl.exist()) { flog << "========ERROR========\n600\n====================" << std::endl; return; }
+        flog << "========PRINT========" << std::endl;
         flog << pl.print();
         flog << "Count : "<< pl.get_count() << " / 10\n";
         int t = pl.run_time(); flog << "Time : "<< t/60 << "min "<< t%60 << "sec\n";
@@ -288,9 +294,8 @@ void Manager::PRINT(const std::string& params) {
 }
 
 void Manager::DELETE(const std::string& params) {
-    flog << "========DELETE========" << std::endl;
     std::stringstream ss(params); std::string opt; ss>>opt;
-    auto success=[&](){ flog<<"Success\n===================="<<std::endl; };
+    auto success=[&](){ flog<<"========DELETE========"<<std::endl<<"Success\n===================="<<std::endl; };
     auto error=[&](){ flog<<"========ERROR========\n700\n===================="<<std::endl; };
     if (opt=="ARTIST"){
         std::string artist; std::getline(ss,artist); artist = trim_copy(artist);
