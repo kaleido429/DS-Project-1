@@ -119,8 +119,9 @@ bool ArtistBST::remove_song(const std::string& artist, const std::string& title)
 }
 
 void ArtistBST::inorderRec(ArtistBSTNode* node, std::ostream& os) const {
-    if (!node) return;
-    inorderRec(node->get_left(), os);
+    // 중위 순회로 사전순 출력 <L> N <R>
+    if (!node) return; // 노드 없으면 종료
+    inorderRec(node->get_left(), os); // 왼쪽 서브트리 방문
     const auto& titles = node->get_title();
     const auto& times = node->get_rt();
     for (size_t i = 0; i < titles.size(); ++i) {
@@ -128,7 +129,7 @@ void ArtistBST::inorderRec(ArtistBSTNode* node, std::ostream& os) const {
         int mm = sec / 60, ss = sec % 60;
         os << node->get_artist() << "/" << titles[i] << "/" << mm << ":" << std::setw(2) << std::setfill('0') << ss << "\n";
     }
-    inorderRec(node->get_right(), os);
+    inorderRec(node->get_right(), os);// 오른쪽 서브트리 방문
 }
 
 void ArtistBST::print(std::ostream& os) const { inorderRec(root, os); }

@@ -14,18 +14,18 @@ private:
 	TitleBSTNode* right = nullptr;
 
 public:
-	TitleBSTNode() = default;
-	explicit TitleBSTNode(const std::string& t) : title(t) {}
+	TitleBSTNode() = default; // 기본 생성자, 모든 멤버 변수를 기본값으로 초기화
+	explicit TitleBSTNode(const std::string& t) : title(t) {} // 제목 초기화
 
-	~TitleBSTNode() = default;
+	~TitleBSTNode() = default; // 기본 소멸자
 
 	// 곡(가수, 재생시간) 추가: 동일 가수-제목 중복은 무시
 	void addSong(const std::string& artist, int runtimeSec) {
 		for (size_t i = 0; i < artists.size(); ++i) {
 			if (artists[i] == artist) return; // 동일 가수는 중복 추가 안 함
 		}
-		artists.push_back(artist);
-		runtimes.push_back(runtimeSec);
+		artists.push_back(artist); // 가수 추가
+		runtimes.push_back(runtimeSec); // 재생시간 추가
 	}
 
 	// getters

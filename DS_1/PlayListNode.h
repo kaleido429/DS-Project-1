@@ -4,12 +4,12 @@
 
 class PlayListNode {
 private:
-	std::string artist;
-	std::string title;
-	int runtime_sec;
+	std::string artist; // 가수 이름
+	std::string title; // 곡 제목
+	int runtime_sec; // 재생 시간(초)
 
-	PlayListNode* prev;
-	PlayListNode* next;
+	PlayListNode* prev; // 이전 노드 포인터
+	PlayListNode* next; // 다음 노드 포인터
 
 public:
 /*
@@ -17,19 +17,19 @@ public:
 PlayList() {}
 ~PlayList(){}
 */
-	PlayListNode(){
-		artist = "";
-		title = "";
-		runtime_sec = 0;
-		prev = nullptr;
-		next = nullptr;
+	PlayListNode(){ // 기본 생성자: 모든 멤버 변수를 기본값으로 초기화
+		set();
 	}
 	~PlayListNode(){
 		
 	}
 	
 	void set() {
-
+		artist.clear();
+		title.clear();
+		runtime_sec = 0;
+		prev = nullptr;
+		next = nullptr;
 	}
 	//getter
 	std::string get_artist() { return artist; }

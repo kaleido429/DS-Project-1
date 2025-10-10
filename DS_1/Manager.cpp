@@ -9,7 +9,7 @@
 
 using namespace std;
 
-// 공백과 CRLF(\r)를 양쪽에서 제거하는 도우미
+// 공백과 CRLF(\r)를 양쪽에서 제거하는 도우미, 에러 방지
 static inline std::string trim_copy(const std::string& s) {
     size_t start = s.find_first_not_of(" \t\r");
     if (start == std::string::npos) return "";
@@ -22,11 +22,11 @@ Manager::Manager() {
 }
 
 Manager::~Manager() {
-    if (fcmd.is_open()) {
-        fcmd.close();
+    if (fcmd.is_open()) {// command 파일 열려 있으면
+        fcmd.close();// command 파일 닫기
     }
-    if (flog.is_open()) {
-        flog.close();
+    if (flog.is_open()) {// 로그 파일 열려 있으면
+        flog.close();// 로그 파일 닫기
     }
 }
 
@@ -127,7 +127,7 @@ void Manager::ADD(const std::string& params) {
 
     if (!std::getline(ss, artist, '|') || !std::getline(ss, title, '|') || !std::getline(ss, runtime, '|')) {
         // 정보 누락 시 에러 처리
-        flog << "========ERROR========" << std::endl;
+        flog << "========ERROR=======" << std::endl;
         flog << 200 << std::endl;
         flog << "====================" << std::endl;
         return;
@@ -140,11 +140,11 @@ void Manager::ADD(const std::string& params) {
         // 이미 곡이 존재할 경우 에러 처리
         flog << "========ERROR========" << std::endl;
         flog << 200 << std::endl;
-        flog << "====================" << std::endl;
+        flog << "=====================" << std::endl;
         return;
     }
-
-    flog << "========ADD========" << std::endl;
+    
+    flog << "========ADD=========" << std::endl;
     q.push(artist, title, runtime);
     flog << artist << "/" << title << "/" << runtime << std::endl;
     flog << "====================" << std::endl;
@@ -155,7 +155,7 @@ void Manager::QPOP() {
     if (q.empty()) {
         flog << "========ERROR========" << std::endl;
         flog << 300 << std::endl;
-        flog << "====================" << std::endl;
+        flog << "=====================" << std::endl;
         return;
     }
     flog << "========QPOP========" << std::endl;
@@ -184,82 +184,160 @@ void Manager::QPOP() {
 }
 
 void Manager::SEARCH(const std::string& params) {
+    // params: "ARTIST <가수이름>" or "TITLE <노래제목>" or "SONG <가수이름> | <노래제목>"
     std::stringstream ss(params);
     std::string opt; ss >> opt;
+    
     if (opt == "ARTIST") {
+        // 아티스트 검색
         std::string artist; std::getline(ss, artist);
         artist = trim_copy(artist);
         auto* node = ab.search(artist);
+
+        // 아티스트가 존재하지 않을 때 에러 처리
         if (!node) { flog << "========ERROR========\n400\n====================" << std::endl; return; }
+        
         flog << "========SEARCH========" << std::endl;
         const auto& titles = node->get_title();
         const auto& times = node->get_rt();
         for (size_t i=0;i<titles.size();++i){ int s=times[i]; flog << artist << "/" << titles[i] << "/" << s/60 << ":" << std::setw(2) << std::setfill('0') << s%60 << "\n"; }
-        flog << "====================" << std::endl; return;
+        flog << "======================" << std::endl; return;
     } else if (opt == "TITLE") {
+        // 제목 검색
         std::string title; std::getline(ss, title);
         title = trim_copy(title);
         auto* node = tb.search(title);
+
+        // 제목이 존재하지 않을 때 에러 처리
         if (!node) { flog << "========ERROR========\n400\n====================" << std::endl; return; }
+        
         flog << "========SEARCH========" << std::endl;
         const auto& artists = node->getArtists();
         const auto& times = node->getRuntimes();
         for (size_t i=0;i<artists.size();++i){ int s=times[i]; flog << artists[i] << "/" << title << "/" << s/60 << ":" << std::setw(2) << std::setfill('0') << s%60 << "\n"; }
-        flog << "====================" << std::endl; return;
+        flog << "======================" << std::endl; return;
     } else if (opt == "SONG") {
+        // 가수+제목 검색
         std::string rest; std::getline(ss, rest);
         rest = trim_copy(rest);
         size_t bar = rest.find('|');
+
+        // 구분자가 없을 때 에러 처리
         if (bar==std::string::npos){ flog << "========ERROR========\n400\n====================" << std::endl; return; }
+        
         std::string artist = trim_copy(rest.substr(0, bar));
         std::string title = trim_copy(rest.substr(bar+1));
         auto* node = ab.search(artist);
+        
+        // 아티스트가 존재하지 않을 때 에러 처리
         if (!node) { flog << "========ERROR========\n400\n====================" << std::endl; return; }
+        
         const auto& titles = node->get_title();
         const auto& times = node->get_rt();
-        for (size_t i=0;i<titles.size();++i){ if (titles[i]==title){ flog << "========SEARCH========" << std::endl; int s=times[i]; flog<<artist<<"/"<<title<<"/"<<s/60<<":"<<std::setw(2)<<std::setfill('0')<<s%60<<"\n"; flog << "====================" << std::endl; return; } }
-        flog << "========ERROR========\n400\n====================" << std::endl; return;
+        for (size_t i=0;i<titles.size();++i){ 
+            if (titles[i]==title){ 
+                flog << "========SEARCH========" << std::endl; 
+                int s=times[i]; 
+                flog<<artist<<"/"<<title<<"/"<<s/60<<":"<<std::setw(2)<<std::setfill('0')<<s%60<<"\n"; 
+                flog << "======================" << std::endl; return; 
+            } 
+        }
+        flog << "========ERROR========\n400\n====================" << std::endl; 
+        return;
     }
     flog << "========ERROR========\n400\n====================" << std::endl;
 }
 
 void Manager::MAKEPL(const std::string& params) {
+    // params: "ARTIST <가수이름>" or "TITLE <노래제목>" or "SONG <가수이름> | <노래제목>"
     std::stringstream ss(params); std::string opt; ss>>opt;
-    auto print_tail = [&](){ flog << "Count : "<< pl.get_count() << " / 10\n"; int t=pl.run_time(); flog<<"Time : "<<t/60<<"min "<<t%60<<"sec\n"; flog << "====================" << std::endl; };
+    auto print_tail = [&](){ 
+        flog << "Count : "<< pl.get_count() << " / 10\n"; int t=pl.run_time(); flog<<"Time : "<<t/60<<"min "<<t%60<<"sec\n"; flog << "======================" << std::endl; 
+    };
+
+    // MAKEPL 명령어 처리
     if (opt=="ARTIST"){
+        // 아티스트 검색
         std::string artist; std::getline(ss, artist); artist = trim_copy(artist);
-        auto* node = ab.search(artist); if(!node){ flog<<"========ERROR========\n500\n===================="<<std::endl; return; }
+        auto* node = ab.search(artist); if(!node){ flog<<"========ERROR========\n500\n====================="<<std::endl; return; }
         const auto& titles=node->get_title(); const auto& times=node->get_rt();
-        if (pl.get_count() + (int)titles.size() > 10){ flog<<"========ERROR========\n500\n===================="<<std::endl; return; }
-        for(size_t i=0;i<titles.size();++i){ if(!pl.find_song(artist, titles[i])){ pl.insert_node(artist, titles[i], times[i]); } else { flog<<"========ERROR========\n500\n===================="<<std::endl; return; } }
+        
+        // 플레이리스트 용량 초과 시 에러 처리
+        if (pl.get_count() + (int)titles.size() > 10){ flog<<"========ERROR========\n500\n====================="<<std::endl; return; }
+
+        for(size_t i=0;i<titles.size();++i){ 
+            if(!pl.find_song(artist, titles[i])){ // 중복 노래가 아닐 때만 삽입
+                pl.insert_node(artist, titles[i], times[i]); 
+            } else { 
+                flog<<"========ERROR========\n500\n===================="<<std::endl; return; 
+            } 
+        }
         flog << "========MAKEPL========" << std::endl;
         flog << pl.print();
-        print_tail(); return;
+        print_tail(); 
+        return;
     } else if (opt=="TITLE"){
+        // 제목 검색
         std::string title; std::getline(ss,title); title = trim_copy(title);
-        auto* node = tb.search(title); if(!node){ flog<<"========ERROR========\n500\n===================="<<std::endl; return; }
+        auto* node = tb.search(title); 
+        if(!node){ // 제목이 존재하지 않을 때 에러 처리
+            flog<<"========ERROR========\n500\n===================="<<std::endl; 
+            return; 
+        }
         const auto& artists=node->getArtists(); const auto& times=node->getRuntimes();
-        if (pl.get_count() + (int)artists.size() > 10){ flog<<"========ERROR========\n500\n===================="<<std::endl; return; }
-        for(size_t i=0;i<artists.size();++i){ if(!pl.find_song(artists[i], title)){ pl.insert_node(artists[i], title, times[i]); } else { flog<<"========ERROR========\n500\n===================="<<std::endl; return; } }
+        if (pl.get_count() + (int)artists.size() > 10){ // 플레이리스트 용량 초과 시 에러 처리
+            flog<<"========ERROR========\n500\n===================="<<std::endl; 
+            return; 
+        }
+        for(size_t i=0;i<artists.size();++i){ 
+            if(!pl.find_song(artists[i], title)){ // 중복 노래가 아닐 때만 삽입
+                pl.insert_node(artists[i], title, times[i]); 
+            } else { flog<<"========ERROR========\n500\n===================="<<std::endl; 
+                return; 
+            } 
+        }
         flog << "========MAKEPL========" << std::endl;
         flog << pl.print();
         print_tail(); return;
     } else if (opt=="SONG"){
+        // 가수+제목 검색
         std::string rest; std::getline(ss, rest); rest = trim_copy(rest);
-        size_t bar=rest.find('|'); if(bar==std::string::npos){ flog<<"========ERROR========\n500\n===================="<<std::endl; return; }
+        size_t bar=rest.find('|'); 
+        if(bar==std::string::npos){ // 구분자가 없을 때 에러 처리
+            flog<<"========ERROR========\n500\n===================="<<std::endl; 
+            return; 
+        }
         std::string artist=trim_copy(rest.substr(0,bar)), title=trim_copy(rest.substr(bar+1));
-        auto* aNode = ab.search(artist); if(!aNode){ flog<<"========ERROR========\n500\n===================="<<std::endl; return; }
+        auto* aNode = ab.search(artist); 
+        if(!aNode){ // 아티스트가 존재하지 않을 때 에러 처리
+            flog<<"========ERROR========\n500\n===================="<<std::endl; 
+            return; 
+        }
         const auto& titles=aNode->get_title(); const auto& times=aNode->get_rt();
-        for(size_t i=0;i<titles.size();++i){ if(titles[i]==title){ if(pl.get_count()>=10 || pl.find_song(artist,title)){ flog<<"========ERROR========\n500\n===================="<<std::endl; return;} pl.insert_node(artist,title,times[i]); flog << "========MAKEPL========" << std::endl; flog << pl.print(); print_tail(); return; } }
+        for(size_t i=0;i<titles.size();++i){ 
+            if(titles[i]==title){ // 노래가 존재할 때
+                if(pl.get_count()>=10 || pl.find_song(artist,title)){ // 플레이리스트 용량 초과 or 중복 노래일 때 에러 처리
+                    flog<<"========ERROR========\n500\n===================="<<std::endl; 
+                    return;
+                } 
+                pl.insert_node(artist,title,times[i]); 
+                flog << "========MAKEPL========" << std::endl; 
+                flog << pl.print(); 
+                print_tail(); 
+                return; 
+            } 
+        }
         flog<<"========ERROR========\n500\n===================="<<std::endl; return;
     }
     flog<<"========ERROR========\n500\n===================="<<std::endl;
 }
 
 void Manager::PRINT(const std::string& params) {
+    // params: "ARTIST" or "TITLE" or "LIST"
     std::string p = trim_copy(params);
     if (p == "ARTIST") {
-        if (ab.empty()) {
+        // ArtistBST 출력
+        if (ab.empty()) {// 트리가 비어있을 때 에러 처리
             flog << "========ERROR========" << std::endl;
             flog << 600 << std::endl;
             flog << "====================" << std::endl;
@@ -269,7 +347,8 @@ void Manager::PRINT(const std::string& params) {
         flog << "ArtistBST" << std::endl;
         ab.print(flog);
     } else if (p == "TITLE") {
-        if (tb.empty()) {
+        // TitleBST 출력
+        if (tb.empty()) {// 트리가 비어있을 때 에러 처리
             flog << "========ERROR========" << std::endl;
             flog << 600 << std::endl;
             flog << "====================" << std::endl;
@@ -279,24 +358,27 @@ void Manager::PRINT(const std::string& params) {
         flog << "TitleBST" << std::endl;
         tb.print(flog);
     } else if (p == "LIST") {
-        if (!pl.exist()) { flog << "========ERROR========\n600\n====================" << std::endl; return; }
+        // 플레이리스트 출력
+        // 플레이리스트가 비어있을 때 에러 처리
+        if (!pl.exist()) { flog << "========ERROR========\n600\n=====================" << std::endl; return; }
         flog << "========PRINT========" << std::endl;
         flog << pl.print();
         flog << "Count : "<< pl.get_count() << " / 10\n";
         int t = pl.run_time(); flog << "Time : "<< t/60 << "min "<< t%60 << "sec\n";
-    } else {
+    } else { // 잘못된 옵션 에러 처리
         flog << "========ERROR========" << std::endl;
         flog << 600 << std::endl;
-        flog << "====================" << std::endl;
+        flog << "=====================" << std::endl;
         return;
     }
-    flog << "====================" << std::endl;
+    flog << "=====================" << std::endl;
 }
 
 void Manager::DELETE(const std::string& params) {
+    // params: "ARTIST <가수이름>" or "TITLE <노래제목>" or "LIST <가수이름> | <노래제목>" or "SONG <가수이름> | <노래제목>"
     std::stringstream ss(params); std::string opt; ss>>opt;
-    auto success=[&](){ flog<<"========DELETE========"<<std::endl<<"Success\n===================="<<std::endl; };
-    auto error=[&](){ flog<<"========ERROR========\n700\n===================="<<std::endl; };
+    auto success=[&](){ flog<<"========DELETE========"<<std::endl<<"Success\n====================="<<std::endl; };
+    auto error=[&](){ flog<<"========ERROR========\n700\n====================="<<std::endl; };
     if (opt=="ARTIST"){
         std::string artist; std::getline(ss,artist); artist = trim_copy(artist);
         auto* node = ab.search(artist); if(!node){ error(); return; }
@@ -306,6 +388,7 @@ void Manager::DELETE(const std::string& params) {
         ab.delete_node(artist);
         success(); return;
     } else if (opt=="TITLE"){
+        // 제목 검색, 삭제
         std::string title; std::getline(ss,title); title = trim_copy(title);
         auto* node = tb.search(title); if(!node){ error(); return; }
         const auto& artists=node->getArtists();
@@ -313,12 +396,14 @@ void Manager::DELETE(const std::string& params) {
         tb.delete_node(title);
         success(); return;
     } else if (opt=="LIST"){
+        // 리스트 삭제
         std::string rest; std::getline(ss,rest); rest = trim_copy(rest);
         size_t bar=rest.find('|'); if(bar==std::string::npos){ error(); return; }
         std::string artist=trim_copy(rest.substr(0,bar)), title=trim_copy(rest.substr(bar+1));
         if (!pl.delete_song(artist,title)) { error(); return; }
         success(); return;
     } else if (opt=="SONG"){
+        // 노래 검색, 삭제
         std::string rest; std::getline(ss,rest); rest = trim_copy(rest);
         size_t bar=rest.find('|'); if(bar==std::string::npos){ error(); return; }
         std::string artist=trim_copy(rest.substr(0,bar)), title=trim_copy(rest.substr(bar+1));

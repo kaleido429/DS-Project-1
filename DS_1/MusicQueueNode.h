@@ -26,7 +26,7 @@ public:
 		next = nullptr;
 		prev = nullptr;
 	}
-	/*
+	/* 기존 무인자 함수
 	void insert() {
 
 	}
